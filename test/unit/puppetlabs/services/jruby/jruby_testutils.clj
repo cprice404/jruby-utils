@@ -17,12 +17,6 @@
 (def gem-home "./target/jruby-gem-home")
 (def compile-mode :off)
 
-(def conf-dir "./target/master-conf")
-(def code-dir "./target/master-code")
-(def var-dir "./target/master-var")
-(def run-dir "./target/master-var/run")
-(def log-dir "./target/master-var/log")
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; JRubyPuppet Test util functions
 
@@ -54,13 +48,7 @@
     (jruby-core/initialize-config
       {:jruby-puppet
        {:ruby-load-path  ruby-load-path
-        :gem-home        gem-home
-        :master-conf-dir conf-dir
-        :master-code-dir code-dir
-        :master-var-dir  var-dir
-        :master-run-dir  run-dir
-        :master-log-dir  log-dir
-        :use-legacy-auth-conf false}}))
+        :gem-home        gem-home}}))
   ([options]
    (merge (jruby-puppet-config) options)))
 

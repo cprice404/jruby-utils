@@ -123,8 +123,7 @@
       (init-jruby-config ruby-load-path gem-home compile-mode)))
 
 (schema/defn ^:always-validate create-scripting-container :- ScriptingContainer
-  "Creates an instance of `org.jruby.embed.ScriptingContainer` and loads up the
-  puppet and facter code inside it."
+  "Creates an instance of `org.jruby.embed.ScriptingContainer`."
   [ruby-load-path :- [schema/Str]
    gem-home :- schema/Str
    compile-mode :- jruby-schemas/SupportedJRubyCompileModes]
@@ -141,20 +140,6 @@
     ;; variable configuration in 'init-jruby-config' for more
     ;; information.
     (.runScriptlet "require 'jar-dependencies'")))
-
-(schema/defn ^:always-validate config->puppet-config :- HashMap
-  "Given the raw jruby-puppet configuration section, return a
-  HashMap with the configuration necessary for ruby Puppet."
-  [config :- jruby-schemas/JRubyPuppetConfig]
-  (let [puppet-config (new HashMap)]
-    (doseq [[setting dir] [[:master-conf-dir "confdir"]
-                           [:master-code-dir "codedir"]
-                           [:master-var-dir "vardir"]
-                           [:master-run-dir "rundir"]
-                           [:master-log-dir "logdir"]]]
-      (if-let [value (get config setting)]
-        (.put puppet-config dir (ks/absolute-path value))))
-    puppet-config))
 
 (schema/defn borrow-with-timeout-fn :- JRubyPuppetInternalBorrowResult
   [timeout :- schema/Int

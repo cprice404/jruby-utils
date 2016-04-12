@@ -24,31 +24,6 @@
    milliseconds. Current value is 1200000ms, or 20 minutes."
   1200000)
 
-(def default-http-connect-timeout
-  "The default number of milliseconds that the client will wait for a connection
-  to be established. Currently set to 2 minutes."
-  (* 2 60 1000))
-
-(def default-http-socket-timeout
-  "The default number of milliseconds that the client will allow for no data to
-  be available on the socket. Currently set to 20 minutes."
-  (* 20 60 1000))
-
-(def default-master-conf-dir
-  "/etc/puppetlabs/puppet")
-
-(def default-master-code-dir
-  "/etc/puppetlabs/code")
-
-(def default-master-log-dir
-  "/var/log/puppetlabs/puppetserver")
-
-(def default-master-run-dir
-  "/var/run/puppetlabs/puppetserver")
-
-(def default-master-var-dir
-  "/opt/puppetlabs/server/data/puppetserver")
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Private
 
@@ -172,46 +147,10 @@
   initialize-config :- jruby-schemas/JRubyPuppetConfig
   [config :- {schema/Keyword schema/Any}]
   (-> (get-in config [:jruby-puppet])
-      (assoc :http-client-ssl-protocols
-             (get-in config [:http-client :ssl-protocols]))
-      (assoc :http-client-cipher-suites
-             (get-in config [:http-client :cipher-suites]))
-      (assoc :http-client-connect-timeout-milliseconds
-             (get-in config [:http-client :connect-timeout-milliseconds]
-                     default-http-connect-timeout))
-      (assoc :http-client-idle-timeout-milliseconds
-             (get-in config [:http-client :idle-timeout-milliseconds]
-                     default-http-socket-timeout))
       (update-in [:compile-mode] #(keyword (or % default-jruby-compile-mode)))
       (update-in [:borrow-timeout] #(or % default-borrow-timeout))
-      (update-in [:master-conf-dir] #(or % default-master-conf-dir))
-      (update-in [:master-var-dir] #(or % default-master-var-dir))
-      (update-in [:master-code-dir] #(or % default-master-code-dir))
-      (update-in [:master-run-dir] #(or % default-master-run-dir))
-      (update-in [:master-log-dir] #(or % default-master-log-dir))
       (update-in [:max-active-instances] #(or % (default-pool-size (ks/num-cpus))))
-      (update-in [:max-requests-per-instance] #(or % 0))
-      (update-in [:use-legacy-auth-conf] #(or % (nil? %)))
-      (dissoc :environment-class-cache-enabled)))
-
-(def facter-jar
-  "Well-known name of the facter jar file"
-  "facter.jar")
-
-(schema/defn ^:always-validate
-  add-facter-jar-to-system-classloader
-  "Searches the ruby load path for a file whose name matches that of the
-  facter jar file.  The first one found is added to the system classloader's
-  classpath.  If no match is found, an info message is written to the log
-  but no failure is returned"
-  [ruby-load-path :- (schema/both (schema/pred vector?) [schema/Str]) ]
-  (if-let [facter-jar (first
-                        (filter fs/exists?
-                          (map #(fs/file % facter-jar) ruby-load-path)))]
-    (do
-      (log/debugf "Adding facter jar to classpath from: %s" facter-jar)
-      (ks-classpath/add-classpath facter-jar))
-    (log/info "Facter jar not found in ruby load path")))
+      (update-in [:max-requests-per-instance] #(or % 0))))
 
 (schema/defn ^:always-validate
   create-pool-context :- jruby-schemas/PoolContext

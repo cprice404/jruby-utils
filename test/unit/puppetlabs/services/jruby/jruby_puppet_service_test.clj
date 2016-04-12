@@ -26,7 +26,7 @@
   (jruby-testutils/jruby-puppet-tk-config
     (jruby-testutils/jruby-puppet-config {:max-active-instances pool-size})))
 
-(defn jruby-service-test-config-with-timeouts
+#_(defn jruby-service-test-config-with-timeouts
   [connect-timeout idle-timeout]
   (merge (jruby-service-test-config 1)
          {:http-client {:connect-timeout-milliseconds connect-timeout
@@ -218,72 +218,3 @@
       (let [service (app/get-service app :JRubyPuppetService)
             context (services/service-context service)]
         (is (= (:borrow-timeout context) jruby-core/default-borrow-timeout))))))
-
-(deftest timeout-settings-applied
-  (testing "timeout settings are properly plumbed"
-    (let [connect-timeout 42
-          socket-timeout  55]
-      (bootstrap/with-app-with-config
-        app
-        default-services
-        (jruby-service-test-config-with-timeouts connect-timeout socket-timeout)
-        ;; This test doesn't technically need to wait for jruby pool
-        ;; initialization to be done but if it doesn't, the pool initialization
-        ;; may continue on during the execution of a subsequent test and
-        ;; interfere with the next test's results.  This wait ensures that the
-        ;; pool initialization agent will be dormant by the time this test
-        ;; finishes.  It should be possible to remove this when SERVER-1087 is
-        ;; resolved.
-        (jruby-testutils/wait-for-jrubies app)
-        (let [service          (app/get-service app :JRubyPuppetService)
-              context          (services/service-context service)
-              pool-context-cfg (get-in context [:pool-context :config])]
-          (is (= connect-timeout (:http-client-connect-timeout-milliseconds pool-context-cfg)))
-          (is (= socket-timeout  (:http-client-idle-timeout-milliseconds pool-context-cfg)))))))
-
-  (testing "default values are set"
-    (bootstrap/with-app-with-config
-      app
-      default-services
-      (jruby-service-test-config 1)
-      ;; This test doesn't technically need to wait for jruby pool
-      ;; initialization to be done but if it doesn't, the pool initialization
-      ;; may continue on during the execution of a subsequent test and
-      ;; interfere with the next test's results.  This wait ensures that the
-      ;; pool initialization agent will be dormant by the time this test
-      ;; finishes.  It should be possible to remove this when SERVER-1087 is
-      ;; resolved.
-      (jruby-testutils/wait-for-jrubies app)
-      (let [service          (app/get-service app :JRubyPuppetService)
-            context          (services/service-context service)
-            pool-context-cfg (get-in context [:pool-context :config])]
-        (is (= jruby-core/default-http-connect-timeout
-               (:http-client-connect-timeout-milliseconds pool-context-cfg)))
-        (is (= jruby-core/default-http-socket-timeout
-               (:http-client-idle-timeout-milliseconds pool-context-cfg)))))))
-
-(deftest facter-jar-loaded-during-init
-  (testing (str "facter jar found from the ruby load path is properly "
-             "loaded into the system classpath")
-    (let [temp-dir (ks/temp-dir)
-          facter-jar (-> temp-dir
-                       (fs/file jruby-core/facter-jar)
-                       (ks/absolute-path))]
-      (fs/touch facter-jar)
-      (bootstrap/with-app-with-config
-        app
-        default-services
-        (assoc-in (jruby-service-test-config 1)
-          [:jruby-puppet :ruby-load-path]
-          (into [] (cons (ks/absolute-path temp-dir)
-                     jruby-testutils/ruby-load-path)))
-        ;; This test doesn't technically need to wait for jruby pool
-        ;; initialization to be done but if it doesn't, the pool initialization
-        ;; may continue on during the execution of a subsequent test and
-        ;; interfere with the next test's results.  This wait ensures that the
-        ;; pool initialization agent will be dormant by the time this test
-        ;; finishes.  It should be possible to remove this when SERVER-1087 is
-        ;; resolved.
-        (jruby-testutils/wait-for-jrubies app)
-        (is (true? (some #(= facter-jar (.getFile %))
-                     (.getURLs (ClassLoader/getSystemClassLoader)))))))))

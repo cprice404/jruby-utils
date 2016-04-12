@@ -20,11 +20,6 @@
                             #"Input to create-pool-context does not match schema"
                             (jruby-core/create-pool-context malformed-config nil)))))
   (let [minimal-config {:jruby-puppet {:gem-home        "/dev/null"
-                                       :master-conf-dir "/dev/null"
-                                       :master-var-dir  "/dev/null"
-                                       :master-code-dir "/dev/null"
-                                       :master-log-dir  "/dev/null"
-                                       :master-run-dir  "/dev/null"
                                        :ruby-load-path  ["/dev/null"]}}
         config        (jruby-core/initialize-config minimal-config)]
     (testing "max-active-instances is set to default if not specified"
