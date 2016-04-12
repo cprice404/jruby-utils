@@ -19,13 +19,15 @@
                           jruby/JRubyPuppetService
                           [[:ConfigService get-config]
                            [:ShutdownService shutdown-on-error]
-                           [:PuppetProfilerService get-profiler]]
+                           ;[:PuppetProfilerService get-profiler]
+                           ]
   (init
     [this context]
-    (let [config            (core/initialize-config (get-config))
-          service-id        (tk-services/service-id this)
+    (let [config (core/initialize-config (get-config))
+          service-id (tk-services/service-id this)
           agent-shutdown-fn (partial shutdown-on-error service-id)
-          profiler          (get-profiler)]
+          ;profiler          (get-profiler)
+          ]
       (core/verify-config-found! config)
       (log/info "Initializing the JRuby service")
       (if (:use-legacy-auth-conf config)
@@ -36,13 +38,15 @@
                   "definitions in the /etc/puppetlabs/puppet/auth.conf file to"
                   "the /etc/puppetlabs/puppetserver/conf.d/auth.conf file."))
       (core/add-facter-jar-to-system-classloader (:ruby-load-path config))
-      (let [pool-context (core/create-pool-context config profiler agent-shutdown-fn)]
+      (let [pool-context #_(core/create-pool-context config profiler agent-shutdown-fn)
+            (core/create-pool-context config agent-shutdown-fn)]
         (jruby-agents/send-prime-pool! pool-context)
         (-> context
             (assoc :pool-context pool-context)
             (assoc :borrow-timeout (:borrow-timeout config))
             (assoc :event-callbacks (atom []))
-            (assoc :environment-class-info-tags (atom {}))))))
+            ;(assoc :environment-class-info-tags (atom {}))
+            ))))
   (stop
    [this context]
    (let [{:keys [pool-context]} (tk-services/service-context this)

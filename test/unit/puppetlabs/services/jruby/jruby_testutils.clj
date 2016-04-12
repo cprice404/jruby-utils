@@ -66,9 +66,9 @@
         :use-legacy-auth-conf false}}))
   ([options]
    (merge (jruby-puppet-config) options)))
-
-(def default-profiler
-  nil)
+;
+;(def default-profiler
+;  nil)
 
 (defn default-shutdown-fn
   [f]
@@ -82,7 +82,9 @@
    (create-pool-instance (jruby-puppet-config {:max-active-instances 1})))
   ([config]
    (let [pool (jruby-internal/instantiate-free-pool 1)]
-     (jruby-internal/create-pool-instance! pool 1 config default-flush-fn default-profiler))))
+     (jruby-internal/create-pool-instance! pool 1 config default-flush-fn
+                                           ;default-profiler
+                                           ))))
 
 (defn create-mock-jruby-instance
   "Creates a mock implementation of the JRubyPuppet interface."
@@ -101,19 +103,22 @@
     id :- schema/Int
     config :- jruby-schemas/JRubyPuppetConfig
     flush-instance-fn :- IFn
-    profiler :- (schema/maybe PuppetProfiler)]
+    ;profiler :- (schema/maybe PuppetProfiler)
+    ]
    (create-mock-pool-instance create-mock-jruby-instance
                               pool
                               id
                               config
                               flush-instance-fn
-                              profiler))
+                              ;                         profiler
+                              ))
   ([mock-jruby-instance-creator-fn :- IFn
     pool :- jruby-schemas/pool-queue-type
     id :- schema/Int
     config :- jruby-schemas/JRubyPuppetConfig
     flush-instance-fn :- IFn
-    _ :- (schema/maybe PuppetProfiler)]
+    ;_ :- (schema/maybe PuppetProfiler)
+    ]
    (let [instance (jruby-schemas/map->JRubyPuppetInstance
                    {:pool pool
                     :id id

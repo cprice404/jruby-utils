@@ -190,11 +190,12 @@
 (schema/defn ^:always-validate
   create-pool-instance! :- JRubyPuppetInstance
   "Creates a new JRubyPuppet instance and adds it to the pool."
-  [pool     :- jruby-schemas/pool-queue-type
-   id       :- schema/Int
-   config   :- jruby-schemas/JRubyPuppetConfig
+  [pool :- jruby-schemas/pool-queue-type
+   id :- schema/Int
+   config :- jruby-schemas/JRubyPuppetConfig
    flush-instance-fn :- IFn
-   profiler :- (schema/maybe PuppetProfiler)]
+   ;profiler :- (schema/maybe PuppetProfiler)
+   ]
   (let [{:keys [ruby-load-path gem-home compile-mode
                 ;http-client-ssl-protocols http-client-cipher-suites
                 ;http-client-connect-timeout-milliseconds

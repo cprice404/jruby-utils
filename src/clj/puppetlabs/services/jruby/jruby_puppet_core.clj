@@ -220,10 +220,10 @@
   "Creates a new JRubyPuppet pool context with an empty pool. Once the JRubyPuppet
   pool object has been created, it will need to be filled using `prime-pool!`."
   [config :- jruby-schemas/JRubyPuppetConfig
-   profiler :- (schema/maybe PuppetProfiler)
+   ;profiler :- (schema/maybe PuppetProfiler)
    agent-shutdown-fn :- (schema/pred ifn?)]
   {:config                config
-   :profiler              profiler
+   ;:profiler              profiler
    :pool-agent            (jruby-agents/pool-agent agent-shutdown-fn)
    ;; For an explanation of why we need a separate agent for the `flush-instance`,
    ;; see the comments in jruby-puppet-agents/send-flush-instance

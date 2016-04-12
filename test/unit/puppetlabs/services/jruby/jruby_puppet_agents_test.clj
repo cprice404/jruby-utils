@@ -3,7 +3,7 @@
             [schema.test :as schema-test]
             [puppetlabs.trapperkeeper.testutils.bootstrap :as tk-testutils]
             [puppetlabs.services.jruby.jruby-puppet-service :as jruby]
-            [puppetlabs.services.puppet-profiler.puppet-profiler-service :as profiler]
+   ;            [puppetlabs.services.puppet-profiler.puppet-profiler-service :as profiler]
             [puppetlabs.services.jruby.jruby-testutils :as jruby-testutils]
             [puppetlabs.services.jruby.jruby-puppet-core :as jruby-core]
             [puppetlabs.trapperkeeper.app :as tk-app]
@@ -23,7 +23,8 @@
 
 (def default-services
   [jruby/jruby-puppet-pooled-service
-   profiler/puppet-profiler-service])
+   ;profiler/puppet-profiler-service
+   ])
 
 (deftest basic-flush-test
   (testing "Flushing the pool results in all new JRuby instances"
@@ -110,7 +111,7 @@
 (deftest next-instance-id-test
   (let [pool-context (jruby-core/create-pool-context
                        (jruby-testutils/jruby-puppet-config {:max-active-instances 8})
-                       jruby-testutils/default-profiler
+                       ;jruby-testutils/default-profiler
                        jruby-testutils/default-shutdown-fn)]
     (testing "next instance id should be based on the pool size"
       (is (= 10 (jruby-agents/next-instance-id 2 pool-context)))
@@ -125,7 +126,8 @@
       (tk-testutils/with-app-with-config
         app
         [jruby/jruby-puppet-pooled-service
-         profiler/puppet-profiler-service]
+         ;profiler/puppet-profiler-service
+         ]
         (-> (jruby-testutils/jruby-puppet-tk-config
               (jruby-testutils/jruby-puppet-config {:max-active-instances 1})))
         (let [jruby-service (tk-app/get-service app :JRubyPuppetService)

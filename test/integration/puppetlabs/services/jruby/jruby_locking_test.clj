@@ -3,7 +3,7 @@
             [puppetlabs.services.jruby.jruby-testutils :as jruby-testutils]
             [puppetlabs.trapperkeeper.app :as tk-app]
             [puppetlabs.services.jruby.jruby-puppet-service :as jruby-service]
-            [puppetlabs.services.puppet-profiler.puppet-profiler-service :as profiler]
+   ;[puppetlabs.services.puppet-profiler.puppet-profiler-service :as profiler]
             [puppetlabs.services.protocols.jruby-puppet :as jruby-protocol]
             [schema.test :as schema-test]
             [puppetlabs.trapperkeeper.testutils.bootstrap :as tk-bootstrap]
@@ -30,7 +30,8 @@
   (tk-bootstrap/with-app-with-config
     app
     [jruby-service/jruby-puppet-pooled-service
-     profiler/puppet-profiler-service]
+     ;profiler/puppet-profiler-service
+     ]
     (jruby-service-test-config 1)
     (jruby-testutils/wait-for-jrubies app)
     (let [jruby-service (tk-app/get-service app :JRubyPuppetService)]
@@ -46,7 +47,8 @@
   (tk-bootstrap/with-app-with-config
     app
     [jruby-service/jruby-puppet-pooled-service
-     profiler/puppet-profiler-service]
+     ;     profiler/puppet-profiler-service
+     ]
     (jruby-service-test-config 1)
     (jruby-testutils/wait-for-jrubies app)
     (let [jruby-service (tk-app/get-service app :JRubyPuppetService)]
@@ -74,7 +76,7 @@
       (tk-bootstrap/with-app-with-config
         app
         [jruby-service/jruby-puppet-pooled-service
-         profiler/puppet-profiler-service
+         ;         profiler/puppet-profiler-service
          event-service]
         (jruby-service-test-config 1)
         (jruby-testutils/wait-for-jrubies app)
@@ -103,8 +105,9 @@
   (testing "contention for instances with borrows and locking handled properly"
     (tk-bootstrap/with-app-with-config
      app
-     [jruby-service/jruby-puppet-pooled-service
-      profiler/puppet-profiler-service]
+      [jruby-service/jruby-puppet-pooled-service
+       ;profiler/puppet-profiler-service
+       ]
      (jruby-service-test-config 2)
      (jruby-testutils/wait-for-jrubies app)
      (let [jruby-service (tk-app/get-service app :JRubyPuppetService)

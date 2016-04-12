@@ -13,7 +13,7 @@
             [clojure.stacktrace :as stacktrace]
             [puppetlabs.trapperkeeper.testutils.bootstrap :as bootstrap]
             [puppetlabs.trapperkeeper.testutils.logging :as logging]
-            [puppetlabs.services.puppet-profiler.puppet-profiler-service :as profiler]
+   ;            [puppetlabs.services.puppet-profiler.puppet-profiler-service :as profiler]
             [puppetlabs.services.jruby.jruby-puppet-core :as jruby-core]
             [puppetlabs.services.jruby.jruby-puppet-internal :as jruby-internal]
             [puppetlabs.services.jruby.jruby-puppet-schemas :as jruby-schemas]
@@ -36,7 +36,8 @@
 
 (def default-services
   [jruby-puppet-pooled-service
-   profiler/puppet-profiler-service])
+   ;profiler/puppet-profiler-service
+   ])
 
 (deftest test-error-during-init
   (testing

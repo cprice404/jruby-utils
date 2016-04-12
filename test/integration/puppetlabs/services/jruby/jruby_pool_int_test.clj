@@ -8,7 +8,7 @@
             [puppetlabs.services.protocols.jruby-puppet :as jruby-protocol]
             [puppetlabs.puppetserver.bootstrap-testutils :as bootstrap]
             [puppetlabs.services.jruby.jruby-puppet-service :as jruby]
-            [puppetlabs.services.puppet-profiler.puppet-profiler-service :as profiler]
+   ;[puppetlabs.services.puppet-profiler.puppet-profiler-service :as profiler]
             [puppetlabs.trapperkeeper.services.webserver.jetty9-service :as jetty9]
             [puppetlabs.trapperkeeper.services.webrouting.webrouting-service :as webrouting]
             ;[puppetlabs.services.puppet-admin.puppet-admin-service :as puppet-admin]

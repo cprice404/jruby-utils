@@ -134,7 +134,7 @@
 (def PoolContext
   "The data structure that stores all JRubyPuppet pools and the original configuration."
   {:config                JRubyPuppetConfig
-   :profiler              (schema/maybe PuppetProfiler)
+   ;:profiler              (schema/maybe PuppetProfiler)
    :pool-agent            JRubyPoolAgent
    :flush-instance-agent  JRubyPoolAgent
    :pool-state            PoolStateContainer})
