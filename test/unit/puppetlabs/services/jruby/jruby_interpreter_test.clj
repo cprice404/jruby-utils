@@ -1,12 +1,7 @@
 (ns puppetlabs.services.jruby.jruby-interpreter-test
   (:require [clojure.test :refer :all]
             [puppetlabs.services.jruby.jruby-testutils :as jruby-testutils]
-            [puppetlabs.services.jruby.jruby-puppet-internal :as jruby-internal]
-            [puppetlabs.puppetserver.testutils :as testutils]))
-
-(use-fixtures :once
-              (testutils/with-puppet-conf
-                "./dev-resources/puppetlabs/services/jruby/jruby_interpreter_test/puppet.conf"))
+            [puppetlabs.services.jruby.jruby-puppet-internal :as jruby-internal]))
 
 (deftest jruby-env-vars
   (testing "the environment used by the JRuby interpreters"

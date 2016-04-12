@@ -1,22 +1,11 @@
 (ns puppetlabs.services.jruby.jruby-pool-int-test
   (:require [clojure.test :refer :all]
-            [schema.test :as schema-test]
             [puppetlabs.trapperkeeper.testutils.bootstrap :as tk-testutils]
             [puppetlabs.services.jruby.jruby-testutils :as jruby-testutils]
             [puppetlabs.trapperkeeper.app :as tk-app]
             [puppetlabs.trapperkeeper.services :as tk-services]
             [puppetlabs.services.protocols.jruby-puppet :as jruby-protocol]
-            [puppetlabs.services.jruby.jruby-puppet-service :as jruby]
-            [me.raynes.fs :as fs]
-            [puppetlabs.puppetserver.testutils :as testutils :refer
-             [ca-cert localhost-cert localhost-key ssl-request-options]]))
-
-(def test-resources-dir
-  "./dev-resources/puppetlabs/services/jruby/jruby_pool_int_test")
-
-(use-fixtures :once
-              schema-test/validate-schemas
-              (testutils/with-puppet-conf (fs/file test-resources-dir "puppet.conf")))
+            [puppetlabs.services.jruby.jruby-puppet-service :as jruby]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Utilities
