@@ -12,7 +12,7 @@
 
 (deftest create-jruby-instance-test
 
-  (testing "Var dir is not required (it will be read from puppet.conf)"
+  #_(testing "Var dir is not required (it will be read from puppet.conf)"
     (let [vardir (-> (jruby-testutils/jruby-puppet-config)
                      (assoc :master-var-dir nil)
                      (jruby-testutils/create-pool-instance)
@@ -20,7 +20,7 @@
                      (.getSetting "vardir"))]
       (is (= (ks/absolute-path "target/master-var-jruby-int-test") vardir))))
 
-  (testing "Directories can be configured programatically
+  #_(testing "Directories can be configured programatically
             (and take precedence over puppet.conf)"
     (let [puppet (-> (jruby-testutils/jruby-puppet-config
                        {:ruby-load-path  jruby-testutils/ruby-load-path
@@ -42,7 +42,7 @@
            "rundir" jruby-testutils/run-dir
            "logdir" jruby-testutils/log-dir)))
 
-  (testing "Settings from Ruby Puppet are available"
+  #_(testing "Settings from Ruby Puppet are available"
     (let [jruby-puppet (-> (jruby-testutils/jruby-puppet-config)
                            (jruby-testutils/create-pool-instance)
                            (:jruby-puppet))]

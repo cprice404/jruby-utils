@@ -143,7 +143,8 @@
     ;; variable configuration in 'init-jruby-config' for more
     ;; information.
     (.runScriptlet "require 'jar-dependencies'")
-    (.runScriptlet "require 'puppet/server/master'")))
+    #_(.runScriptlet "require 'puppet/server/master'")
+    ))
 
 (schema/defn ^:always-validate config->puppet-config :- HashMap
   "Given the raw jruby-puppet configuration section, return a
@@ -177,9 +178,12 @@
 (schema/defn ^:always-validate
   cleanup-pool-instance!
   "Cleans up and cleanly terminates a JRubyPuppet instance and removes it from the pool."
-  [{:keys [scripting-container jruby-puppet pool] :as instance} :- JRubyPuppetInstance]
+  [{:keys [scripting-container
+           ;jruby-puppet
+           pool] :as instance} :- JRubyPuppetInstance]
   (.unregister pool instance)
-  (.terminate jruby-puppet)
+  ;; TODO: callback hook?
+  ;(.terminate jruby-puppet)
   (.terminate scripting-container)
   (log/infof "Cleaned up old JRuby instance with id %s." (:id instance)))
 
@@ -192,34 +196,36 @@
    flush-instance-fn :- IFn
    profiler :- (schema/maybe PuppetProfiler)]
   (let [{:keys [ruby-load-path gem-home compile-mode
-                http-client-ssl-protocols http-client-cipher-suites
-                http-client-connect-timeout-milliseconds
-                http-client-idle-timeout-milliseconds
-                use-legacy-auth-conf]} config]
+                ;http-client-ssl-protocols http-client-cipher-suites
+                ;http-client-connect-timeout-milliseconds
+                ;http-client-idle-timeout-milliseconds
+                ;use-legacy-auth-conf
+                ]} config]
     (when-not ruby-load-path
       (throw (Exception.
                "JRuby service missing config value 'ruby-load-path'")))
     (log/infof "Creating JRuby instance with id %s." id)
-    (let [scripting-container   (create-scripting-container
-                                 ruby-load-path
-                                 gem-home
-                                 compile-mode)
-          env-registry          (puppet-env/environment-registry)
-          ruby-puppet-class     (.runScriptlet scripting-container "Puppet::Server::Master")
-          puppet-config         (config->puppet-config config)
-          puppet-server-config  (HashMap.)]
-      (when http-client-ssl-protocols
-        (.put puppet-server-config "ssl_protocols" (into-array String http-client-ssl-protocols)))
-      (when http-client-cipher-suites
-        (.put puppet-server-config "cipher_suites" (into-array String http-client-cipher-suites)))
-      (.put puppet-server-config "profiler" profiler)
-      (.put puppet-server-config "environment_registry" env-registry)
-      (.put puppet-server-config "http_connect_timeout_milliseconds"
-        http-client-connect-timeout-milliseconds)
-      (.put puppet-server-config "http_idle_timeout_milliseconds"
-        http-client-idle-timeout-milliseconds)
-      (.put puppet-server-config "use_legacy_auth_conf" use-legacy-auth-conf)
-      (let [instance (jruby-schemas/map->JRubyPuppetInstance
+    (let [scripting-container (create-scripting-container
+                               ruby-load-path
+                               gem-home
+                               compile-mode)
+          ;env-registry (puppet-env/environment-registry)
+          ;ruby-puppet-class     (.runScriptlet scripting-container "Puppet::Server::Master")
+          ;puppet-config         (config->puppet-config config)
+          ;puppet-server-config  (HashMap.)
+          ]
+      ;(when http-client-ssl-protocols
+      ;  (.put puppet-server-config "ssl_protocols" (into-array String http-client-ssl-protocols)))
+      ;(when http-client-cipher-suites
+      ;  (.put puppet-server-config "cipher_suites" (into-array String http-client-cipher-suites)))
+      ;(.put puppet-server-config "profiler" profiler)
+      ;(.put puppet-server-config "environment_registry" env-registry)
+      ;(.put puppet-server-config "http_connect_timeout_milliseconds"
+      ;  http-client-connect-timeout-milliseconds)
+      ;(.put puppet-server-config "http_idle_timeout_milliseconds"
+      ;  http-client-idle-timeout-milliseconds)
+      ;(.put puppet-server-config "use_legacy_auth_conf" use-legacy-auth-conf)
+      #_(let [instance (jruby-schemas/map->JRubyPuppetInstance
                        {:pool                 pool
                         :id                   id
                         :max-requests         (:max-requests-per-instance config)
@@ -235,7 +241,26 @@
                         :scripting-container  scripting-container
                         :environment-registry env-registry})]
         (.register pool instance)
-        instance))))
+        instance)
+      (let [instance (jruby-schemas/map->JRubyPuppetInstance
+                      {:pool pool
+                       :id id
+                       :max-requests (:max-requests-per-instance config)
+                       :flush-instance-fn flush-instance-fn
+                       :state (atom {:borrow-count 0})
+                       ;:jruby-puppet         (.callMethodWithArgArray
+                       ;            n           scripting-container
+                       ;                       ruby-puppet-class
+                       ;                       "new"
+                       ;                       (into-array Object
+                       ;                                   [puppet-config puppet-server-config])
+                       ;                       JRubyPuppet)
+                       :scripting-container scripting-container
+                       ;:environment-registry env-registry
+                       })]
+        (.register pool instance)
+        instance)
+      )))
 
 (schema/defn ^:always-validate
   get-pool-state :- jruby-schemas/PoolState

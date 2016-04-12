@@ -120,10 +120,11 @@
                     :max-requests (:max-requests-per-instance config)
                     :flush-instance-fn flush-instance-fn
                     :state (atom {:borrow-count 0})
-                    :jruby-puppet (mock-jruby-instance-creator-fn)
+                    ;:jruby-puppet (mock-jruby-instance-creator-fn)
                     :scripting-container (ScriptingContainer.
                                           LocalContextScope/SINGLETHREAD)
-                    :environment-registry (puppet-env/environment-registry)})]
+                    ;:environment-registry (puppet-env/environment-registry)
+                    })]
      (.register pool instance)
      instance)))
 

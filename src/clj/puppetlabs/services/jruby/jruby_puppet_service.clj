@@ -123,7 +123,7 @@
     (let [event-callbacks (:event-callbacks (tk-services/service-context this))]
       (swap! event-callbacks conj callback-fn))))
 
-(defmacro with-jruby-puppet
+#_(defmacro with-jruby-puppet
   "Encapsulates the behavior of borrowing and returning an instance of
   JRubyPuppet.  Example usage:
 
@@ -161,6 +161,47 @@
            ~@body
            (finally
              (jruby/return-instance ~jruby-service pool-instance# ~reason)))))))
+
+;; TODO: rename, and rename var for all usages
+(defmacro with-jruby-puppet
+  "Encapsulates the behavior of borrowing and returning an instance of
+  JRubyPuppet.  Example usage:
+
+  (let [jruby-service (get-service :JRubyPuppetService)]
+    (with-jruby-puppet
+      jruby-puppet
+      jruby-service
+      (do-something-with-a-jruby-puppet-instance jruby-puppet)))
+
+  Will throw an IllegalStateException if borrowing an instance of
+  JRubyPuppet times out."
+  [jruby-puppet jruby-service reason & body]
+  `(loop [pool-instance# (jruby/borrow-instance ~jruby-service ~reason)]
+     (if (nil? pool-instance#)
+       (sling/throw+
+        {:type    ::jruby-timeout
+         :message (str "Attempt to borrow a JRuby instance from the pool "
+                       "timed out; Puppet Server is temporarily overloaded. If "
+                       "you get this error repeatedly, your server might be "
+                       "misconfigured or trying to serve too many agent nodes. "
+                       "Check Puppet Server settings: "
+                       "jruby-puppet.max-active-instances.")}))
+     (when (jruby-schemas/shutdown-poison-pill? pool-instance#)
+       (jruby/return-instance ~jruby-service pool-instance# ~reason)
+       (sling/throw+
+        {:type    ::service-unavailable
+         :message (str "Attempted to borrow a JRuby instance from the pool "
+                       "during a shutdown. Please try again.")}))
+     (if (jruby-schemas/retry-poison-pill? pool-instance#)
+       (do
+         (jruby/return-instance ~jruby-service pool-instance# ~reason)
+         (recur (jruby/borrow-instance ~jruby-service ~reason)))
+       (let [~jruby-puppet (:jruby-puppet pool-instance#)]
+         (try
+           ~@body
+           (finally
+             (jruby/return-instance ~jruby-service pool-instance# ~reason)))))))
+
 
 (defmacro with-lock
   "Acquires a lock on the pool, executes the body, and releases the lock."

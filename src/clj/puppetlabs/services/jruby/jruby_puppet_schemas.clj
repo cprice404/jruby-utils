@@ -150,7 +150,7 @@
                'JRubyInstanceState))
 
 ;; A record representing an individual entry in the JRubyPuppet pool.
-(schema/defrecord JRubyPuppetInstance
+#_(schema/defrecord JRubyPuppetInstance
                   [pool :- pool-queue-type
                    id :- schema/Int
                    max-requests :- schema/Int
@@ -168,6 +168,28 @@
                                            (Integer/toHexString (.hashCode this))
                                            id
                                            @state)))
+
+;; TODO: rename
+(schema/defrecord JRubyPuppetInstance
+  [pool :- pool-queue-type
+   id :- schema/Int
+   max-requests :- schema/Int
+   flush-instance-fn :- IFn
+   state :- JRubyInstanceStateContainer
+   ;jruby-puppet :- JRubyPuppet
+   scripting-container :- ScriptingContainer
+   ;environment-registry :- (schema/both
+   ;                         EnvironmentRegistry
+   ;                         (schema/pred
+   ;                          #(satisfies? puppet-env/EnvironmentStateContainer %)))
+   ]
+  Object
+  (toString [this] (format "%s@%s {:id %s :state (Atom: %s)}"
+                           (.getName JRubyPuppetInstance)
+                           (Integer/toHexString (.hashCode this))
+                           id
+                           @state)))
+
 
 (defn jruby-puppet-instance?
   [x]
