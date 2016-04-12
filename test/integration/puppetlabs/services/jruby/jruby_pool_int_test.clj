@@ -283,33 +283,37 @@
         ;; now the pool is flushed, and the constants should be cleared
         (is (true? (verify-no-constants pool-context 2)))))))
 
-#_(deftest ^:integration max-requests-flush-while-pool-flush-in-progress-test
+(deftest ^:integration max-requests-flush-while-pool-flush-in-progress-test
   (testing "instance from new pool hits max-requests while flush in progress"
-    (let [test-pem #(str "./dev-resources/puppetlabs/services/jruby/jruby_pool_int_test/" %)
-          ssl-options {:ssl-ca-cert (test-pem "ca-cert.pem")
-                       :ssl-cert (test-pem "localhost-cert.pem")
-                       :ssl-key (test-pem "localhost-privkey.pem")}]
+    (let [                                                  ;test-pem #(str "./dev-resources/puppetlabs/services/jruby/jruby_pool_int_test/" %)
+          ;ssl-options {:ssl-ca-cert (test-pem "ca-cert.pem")
+          ;             :ssl-cert (test-pem "localhost-cert.pem")
+          ;             :ssl-key (test-pem "localhost-privkey.pem")}
+          ]
       (jruby-testutils/with-mock-pool-instance-fixture
         (tk-testutils/with-app-with-config
           app
-          [profiler/puppet-profiler-service
+          [;profiler/puppet-profiler-service
            jruby/jruby-puppet-pooled-service
-           jetty9/jetty9-service
-           webrouting/webrouting-service
-           puppet-admin/puppet-admin-service
-           authorization/authorization-service]
-          (merge (jruby-testutils/jruby-puppet-tk-config
+           ;jetty9/jetty9-service
+           ;webrouting/webrouting-service
+           ;puppet-admin/puppet-admin-service
+           ;authorization/authorization-service
+           ]
+          ;(merge
+           (jruby-testutils/jruby-puppet-tk-config
                    (jruby-testutils/jruby-puppet-config {:max-active-instances      4
                                                          :max-requests-per-instance 10
                                                          :borrow-timeout
                                                          default-borrow-timeout}))
-                 {:webserver    (merge {:ssl-port 8140
+#_{:webserver    (merge {:ssl-port 8140
                                         :ssl-host "localhost"}
                                        ssl-options)
                   :web-router-service
                                 {:puppetlabs.services.ca.certificate-authority-service/certificate-authority-service ""
                                  :puppetlabs.services.master.master-service/master-service                           ""
-                                 :puppetlabs.services.puppet-admin.puppet-admin-service/puppet-admin-service         "/puppet-admin-api"}})
+                                 :puppetlabs.services.puppet-admin.puppet-admin-service/puppet-admin-service         "/puppet-admin-api"}}
+           ;)
           (let [jruby-service (tk-app/get-service app :JRubyPuppetService)
                 context (tk-services/service-context jruby-service)
                 pool-context (:pool-context context)]
@@ -331,7 +335,8 @@
                 (is (= 9 (:borrow-count @(:state instance2))))
 
                 ;; trigger a flush
-                (is (true? (trigger-flush ssl-options)))
+                ;(is (true? (trigger-flush ssl-options)))
+                (jruby-protocol/flush-jruby-pool! jruby-service)
                 ;; wait for the new pool to become available
                 (is (true? (wait-for-new-pool jruby-service)))
                 ;; there will only be two instances in the new pool, because we are holding
