@@ -1,8 +1,6 @@
 (ns puppetlabs.services.jruby.jruby-puppet-schemas
-  (:require [schema.core :as schema]
-            [puppetlabs.services.jruby.puppet-environments :as puppet-env])
+  (:require [schema.core :as schema])
   (:import (clojure.lang Atom Agent IFn PersistentArrayMap PersistentHashMap)
-           (com.puppetlabs.puppetserver PuppetProfiler JRubyPuppet EnvironmentRegistry)
            (com.puppetlabs.puppetserver.pool LockablePool)
            (org.jruby Main Main$Status RubyInstanceConfig)
            (com.puppetlabs.puppetserver.jruby ScriptingContainer)))
@@ -134,7 +132,6 @@
 (def PoolContext
   "The data structure that stores all JRubyPuppet pools and the original configuration."
   {:config                JRubyPuppetConfig
-   :profiler              (schema/maybe PuppetProfiler)
    :pool-agent            JRubyPoolAgent
    :flush-instance-agent  JRubyPoolAgent
    :pool-state            PoolStateContainer})
@@ -149,25 +146,20 @@
                      (nil? (schema/check JRubyInstanceState @%)))
                'JRubyInstanceState))
 
-;; A record representing an individual entry in the JRubyPuppet pool.
+;; TODO: rename, get rid of references to puppet
 (schema/defrecord JRubyPuppetInstance
-                  [pool :- pool-queue-type
-                   id :- schema/Int
-                   max-requests :- schema/Int
-                   flush-instance-fn :- IFn
-                   state :- JRubyInstanceStateContainer
-                   jruby-puppet :- JRubyPuppet
-                   scripting-container :- ScriptingContainer
-                   environment-registry :- (schema/both
-                                             EnvironmentRegistry
-                                             (schema/pred
-                                               #(satisfies? puppet-env/EnvironmentStateContainer %)))]
-                  Object
-                  (toString [this] (format "%s@%s {:id %s :state (Atom: %s)}"
-                                           (.getName JRubyPuppetInstance)
-                                           (Integer/toHexString (.hashCode this))
-                                           id
-                                           @state)))
+  [pool :- pool-queue-type
+   id :- schema/Int
+   max-requests :- schema/Int
+   flush-instance-fn :- IFn
+   state :- JRubyInstanceStateContainer
+   scripting-container :- ScriptingContainer]
+  Object
+  (toString [this] (format "%s@%s {:id %s :state (Atom: %s)}"
+                           (.getName JRubyPuppetInstance)
+                           (Integer/toHexString (.hashCode this))
+                           id
+                           @state)))
 
 (defn jruby-puppet-instance?
   [x]
