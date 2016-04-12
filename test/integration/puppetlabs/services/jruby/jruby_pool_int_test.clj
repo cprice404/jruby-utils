@@ -178,53 +178,41 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Tests
 
+;; TODO: this test seems redundant to the one in jruby-puppet-agents-test
 (deftest ^:integration flush-jruby-pool-test
   (testing "Flushing the pool results in all new JRuby instances"
     (tk-testutils/with-app-with-config
       app
-      [                                                     ;profiler/puppet-profiler-service
-       jruby/jruby-puppet-pooled-service
-       ;jetty9/jetty9-service
-       ;webrouting/webrouting-service
-       ;puppet-admin/puppet-admin-service
-       ;authorization/authorization-service
-       ]
-      ;      (bootstrap/with-puppetserver-running
-      ;app
-      ;(merge
-       (jruby-testutils/jruby-puppet-tk-config
-              (jruby-testutils/jruby-puppet-config {:max-active-instances      4
-                                                    :borrow-timeout default-borrow-timeout}))
-             #_{:webserver    (merge {:ssl-port 8140
-                                    :ssl-host "localhost"}
-                                   ssl-options)
-              :web-router-service
-              {:puppetlabs.services.ca.certificate-authority-service/certificate-authority-service ""
-               :puppetlabs.services.master.master-service/master-service                           ""
-               :puppetlabs.services.puppet-admin.puppet-admin-service/puppet-admin-service         "/puppet-admin-api"}}
-       ;)
+      [jruby/jruby-puppet-pooled-service]
+      (jruby-testutils/jruby-puppet-tk-config
+       (jruby-testutils/jruby-puppet-config {:max-active-instances      4
+                                             :borrow-timeout default-borrow-timeout}))
+      (let [jruby-service (tk-app/get-service app :JRubyPuppetService)
+            context (tk-services/service-context jruby-service)
+            pool-context (:pool-context context)]
+        ;; set a ruby constant in each instance so that we can recognize them
+        (is (true? (set-constants-and-verify pool-context 4)))
+        (let [flush-complete (add-watch-for-flush-complete pool-context)]
+          ;(is (true? (trigger-flush ssl-request-options)))
+          (jruby-protocol/flush-jruby-pool! jruby-service)
+          (is (true? (timed-deref flush-complete))
+              (str "timed out waiting for the flush to complete, stack:\n"
+                   (get-all-stack-traces-as-str))))
+        ;; now the pool is flushed, so the constants should be cleared
+        (is (true? (verify-no-constants pool-context 4)))))))
 
-
-       (let [jruby-service (tk-app/get-service app :JRubyPuppetService)
-             context (tk-services/service-context jruby-service)
-             pool-context (:pool-context context)]
-         ;; set a ruby constant in each instance so that we can recognize them
-         (is (true? (set-constants-and-verify pool-context 4)))
-         (let [flush-complete (add-watch-for-flush-complete pool-context)]
-           ;(is (true? (trigger-flush ssl-request-options)))
-           (jruby-protocol/flush-jruby-pool! jruby-service)
-           (is (true? (timed-deref flush-complete))
-               (str "timed out waiting for the flush to complete, stack:\n"
-                    (get-all-stack-traces-as-str))))
-         ;; now the pool is flushed, so the constants should be cleared
-         (is (true? (verify-no-constants pool-context 4)))))))
-
-#_(deftest ^:integration hold-instance-while-pool-flush-in-progress-test
+(deftest ^:integration hold-instance-while-pool-flush-in-progress-test
   (testing "instance borrowed from old pool before pool flush begins and returned *after* new pool is available"
-    (bootstrap/with-puppetserver-running
-      app
-      {:jruby-puppet {:max-active-instances 4
-                      :borrow-timeout default-borrow-timeout}}
+    ;(bootstrap/with-puppetserver-running
+    ;  app
+    ;  {:jruby-puppet {:max-active-instances 4
+    ;                  :borrow-timeout default-borrow-timeout}}
+      (tk-testutils/with-app-with-config
+        app
+        [jruby/jruby-puppet-pooled-service]
+        (jruby-testutils/jruby-puppet-tk-config
+         (jruby-testutils/jruby-puppet-config {:max-active-instances      4
+                                               :borrow-timeout default-borrow-timeout}))
       (let [jruby-service (tk-app/get-service app :JRubyPuppetService)
             context (tk-services/service-context jruby-service)
             pool-context (:pool-context context)]
@@ -235,7 +223,8 @@
               instance (jruby-protocol/borrow-instance jruby-service
                          :hold-instance-while-pool-flush-in-progress-test)]
           ;; trigger a flush
-          (is (true? (trigger-flush ssl-request-options)))
+          ;(is (true? (trigger-flush ssl-request-options)))
+          (jruby-protocol/flush-jruby-pool! jruby-service)
           ;; wait for the new pool to become available
           (is (true? (wait-for-new-pool jruby-service)))
           ;; return the instance
@@ -247,12 +236,18 @@
         ;; now the pool is flushed, and the constants should be cleared
         (is (true? (verify-no-constants pool-context 4)))))))
 
-#_(deftest ^:integration hold-file-handle-on-instance-while-pool-flush-in-progress-test
+(deftest ^:integration hold-file-handle-on-instance-while-pool-flush-in-progress-test
   (testing "file handle opened from old pool instance is held open across pool flush"
-    (bootstrap/with-puppetserver-running
+    (tk-testutils/with-app-with-config
       app
-      {:jruby-puppet {:max-active-instances 2
-                      :borrow-timeout default-borrow-timeout}}
+      [jruby/jruby-puppet-pooled-service]
+      (jruby-testutils/jruby-puppet-tk-config
+       (jruby-testutils/jruby-puppet-config {:max-active-instances      4
+                                             :borrow-timeout default-borrow-timeout}))
+    ;(bootstrap/with-puppetserver-running
+    ;  app
+    ;  {:jruby-puppet {:max-active-instances 2
+    ;                  :borrow-timeout default-borrow-timeout}}
       (let [jruby-service (tk-app/get-service app :JRubyPuppetService)
             context (tk-services/service-context jruby-service)
             pool-context (:pool-context context)]
@@ -264,12 +259,14 @@
                          :hold-instance-while-pool-flush-in-progress-test)
               sc (:scripting-container instance)]
           (.runScriptlet sc
-                         (str "$unique_file = "
-                              "Puppet::FileSystem::Uniquefile.new"
+                         (str "require 'tempfile'\n\n"
+                              "$unique_file = "
+                              "Tempfile.new"
                               "('hold-instance-test-', './target')"))
           (try
             ;; trigger a flush
-            (is (true? (trigger-flush ssl-request-options)))
+            ;(is (true? (trigger-flush ssl-request-options)))
+            (jruby-protocol/flush-jruby-pool! jruby-service)
             ;; wait for the new pool to become available
             (is (true? (wait-for-new-pool jruby-service)))
 

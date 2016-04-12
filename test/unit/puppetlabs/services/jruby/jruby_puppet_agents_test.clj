@@ -120,6 +120,7 @@
       (let [id (- Integer/MAX_VALUE 1)]
         (is (= (mod id 8) (jruby-agents/next-instance-id id pool-context)))))))
 
+;; TODO: this test is useless as-is
 (deftest master-termination-test
   (testing "Flushing the pool causes masters to be terminated"
     (logutils/with-test-logging
