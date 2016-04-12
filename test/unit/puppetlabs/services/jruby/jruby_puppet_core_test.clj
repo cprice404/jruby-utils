@@ -101,7 +101,8 @@
             {:keys [return _]} m
             exit-code (.getStatus return)]
         (is (= 42 exit-code))))
-    (testing "irb with -r puppet"
+    ;; TODO: put some other lib on the load path so that we can test a require
+    #_(testing "irb with -r puppet"
       (let [m (capture-out
                 (with-stdin-str "puts %{VERSION: #{Puppet.version}}"
                   (jruby-core/cli-run! min-config "irb" ["-r" "puppet" "-f"])))
@@ -115,7 +116,9 @@
 
 (deftest ^:integration cli-ruby!-test
   (testing "jruby cli command output"
-    (testing "ruby -r puppet"
+    ;; TODO: put some other lib on the load path so that we can test a require
+    ;; TODO: consider bringing the CLI clj files back into the repo?
+    #_(testing "ruby -r puppet"
       (let [m (capture-out
                 (with-stdin-str "puts %{VERSION: #{Puppet.version}}"
                   (jruby-core/cli-ruby! min-config ["-r" "puppet"])))

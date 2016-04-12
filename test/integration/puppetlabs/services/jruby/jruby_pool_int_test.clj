@@ -8,20 +8,20 @@
             [puppetlabs.services.protocols.jruby-puppet :as jruby-protocol]
             [puppetlabs.puppetserver.bootstrap-testutils :as bootstrap]
             [puppetlabs.services.jruby.jruby-puppet-service :as jruby]
-            [puppetlabs.services.puppet-profiler.puppet-profiler-service :as profiler]
+   ;[puppetlabs.services.puppet-profiler.puppet-profiler-service :as profiler]
             [puppetlabs.trapperkeeper.services.webserver.jetty9-service :as jetty9]
             [puppetlabs.trapperkeeper.services.webrouting.webrouting-service :as webrouting]
-            [puppetlabs.services.puppet-admin.puppet-admin-service :as puppet-admin]
+            ;[puppetlabs.services.puppet-admin.puppet-admin-service :as puppet-admin]
             [puppetlabs.trapperkeeper.services.authorization.authorization-service :as authorization]
             [puppetlabs.http.client.sync :as http-client]
             [me.raynes.fs :as fs]
             [puppetlabs.trapperkeeper.internal :as tk-internal]
             [puppetlabs.trapperkeeper.core :as tk]
-            [puppetlabs.services.request-handler.request-handler-service :as handler-service]
-            [puppetlabs.services.versioned-code-service.versioned-code-service :as vcs]
-            [puppetlabs.services.config.puppet-server-config-service :as ps-config]
-            [puppetlabs.services.protocols.request-handler :as handler]
-            [puppetlabs.services.request-handler.request-handler-core :as handler-core]
+            ;[puppetlabs.services.request-handler.request-handler-service :as handler-service]
+            ;[puppetlabs.services.versioned-code-service.versioned-code-service :as vcs]
+            ;[puppetlabs.services.config.puppet-server-config-service :as ps-config]
+            ;[puppetlabs.services.protocols.request-handler :as handler]
+            ;[puppetlabs.services.request-handler.request-handler-core :as handler-core]
             [puppetlabs.ssl-utils.core :as ssl-utils]
             [puppetlabs.kitchensink.testutils :as ks-testutils]
             [puppetlabs.puppetserver.testutils :as testutils :refer
@@ -136,7 +136,7 @@
   ;; over them and expecting a 'NameError' when we reference the constant by name.
   (every? false? (check-all-jrubies-for-constants pool-context num-instances)))
 
-(defn trigger-flush
+#_(defn trigger-flush
   [ssl-options]
   (let [response (http-client/delete
                    "https://localhost:8140/puppet-admin-api/v1/jruby-pool"
@@ -178,26 +178,48 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Tests
 
-(deftest ^:integration admin-api-flush-jruby-pool-test
+(deftest ^:integration flush-jruby-pool-test
   (testing "Flushing the pool results in all new JRuby instances"
-    (bootstrap/with-puppetserver-running
+    (tk-testutils/with-app-with-config
       app
-      {:jruby-puppet {:max-active-instances 4
-                      :borrow-timeout default-borrow-timeout}}
-      (let [jruby-service (tk-app/get-service app :JRubyPuppetService)
-            context (tk-services/service-context jruby-service)
-            pool-context (:pool-context context)]
-        ;; set a ruby constant in each instance so that we can recognize them
-        (is (true? (set-constants-and-verify pool-context 4)))
-        (let [flush-complete (add-watch-for-flush-complete pool-context)]
-          (is (true? (trigger-flush ssl-request-options)))
-          (is (true? (timed-deref flush-complete))
-              (str "timed out waiting for the flush to complete, stack:\n"
-                   (get-all-stack-traces-as-str))))
-        ;; now the pool is flushed, so the constants should be cleared
-        (is (true? (verify-no-constants pool-context 4)))))))
+      [                                                     ;profiler/puppet-profiler-service
+       jruby/jruby-puppet-pooled-service
+       ;jetty9/jetty9-service
+       ;webrouting/webrouting-service
+       ;puppet-admin/puppet-admin-service
+       ;authorization/authorization-service
+       ]
+      ;      (bootstrap/with-puppetserver-running
+      ;app
+      ;(merge
+       (jruby-testutils/jruby-puppet-tk-config
+              (jruby-testutils/jruby-puppet-config {:max-active-instances      4
+                                                    :borrow-timeout default-borrow-timeout}))
+             #_{:webserver    (merge {:ssl-port 8140
+                                    :ssl-host "localhost"}
+                                   ssl-options)
+              :web-router-service
+              {:puppetlabs.services.ca.certificate-authority-service/certificate-authority-service ""
+               :puppetlabs.services.master.master-service/master-service                           ""
+               :puppetlabs.services.puppet-admin.puppet-admin-service/puppet-admin-service         "/puppet-admin-api"}}
+       ;)
 
-(deftest ^:integration hold-instance-while-pool-flush-in-progress-test
+
+       (let [jruby-service (tk-app/get-service app :JRubyPuppetService)
+             context (tk-services/service-context jruby-service)
+             pool-context (:pool-context context)]
+         ;; set a ruby constant in each instance so that we can recognize them
+         (is (true? (set-constants-and-verify pool-context 4)))
+         (let [flush-complete (add-watch-for-flush-complete pool-context)]
+           ;(is (true? (trigger-flush ssl-request-options)))
+           (jruby-protocol/flush-jruby-pool! jruby-service)
+           (is (true? (timed-deref flush-complete))
+               (str "timed out waiting for the flush to complete, stack:\n"
+                    (get-all-stack-traces-as-str))))
+         ;; now the pool is flushed, so the constants should be cleared
+         (is (true? (verify-no-constants pool-context 4)))))))
+
+#_(deftest ^:integration hold-instance-while-pool-flush-in-progress-test
   (testing "instance borrowed from old pool before pool flush begins and returned *after* new pool is available"
     (bootstrap/with-puppetserver-running
       app
@@ -225,7 +247,7 @@
         ;; now the pool is flushed, and the constants should be cleared
         (is (true? (verify-no-constants pool-context 4)))))))
 
-(deftest ^:integration hold-file-handle-on-instance-while-pool-flush-in-progress-test
+#_(deftest ^:integration hold-file-handle-on-instance-while-pool-flush-in-progress-test
   (testing "file handle opened from old pool instance is held open across pool flush"
     (bootstrap/with-puppetserver-running
       app
@@ -264,7 +286,7 @@
         ;; now the pool is flushed, and the constants should be cleared
         (is (true? (verify-no-constants pool-context 2)))))))
 
-(deftest ^:integration max-requests-flush-while-pool-flush-in-progress-test
+#_(deftest ^:integration max-requests-flush-while-pool-flush-in-progress-test
   (testing "instance from new pool hits max-requests while flush in progress"
     (let [test-pem #(str "./dev-resources/puppetlabs/services/jruby/jruby_pool_int_test/" %)
           ssl-options {:ssl-ca-cert (test-pem "ca-cert.pem")
@@ -353,109 +375,3 @@
 
             ;; we should have three instances with the constant and one without.
             (is (true? (check-jrubies-for-constant-counts pool-context 3 1)))))))))
-
-(defprotocol BonusService
-  (bonus-service-fn [this]))
-
-(deftest ^:integration test-restart-comes-back
-  (testing "After a TK restart puppetserver can still handle requests"
-    (let [call-seq (atom [])
-          debug-log "./target/test-restart-comes-back.log"
-          lc-fn (fn [context action] (swap! call-seq conj action) context)
-          bonus-service (tk-services/service BonusService
-                          [[:MasterService]]
-                          (init [this context] (lc-fn context :init-bonus-service))
-                          (start [this context] (lc-fn context :start-bonus-service))
-                          (stop [this context] (lc-fn context :stop-bonus-service))
-                          (bonus-service-fn [this] (lc-fn nil :bonus-service-fn)))]
-      (fs/delete debug-log)
-      (bootstrap/with-puppetserver-running-with-services
-       app
-       (conj (tk-bootstrap/parse-bootstrap-config! bootstrap/dev-bootstrap-file) bonus-service)
-       {:global {:logging-config
-                 (str "./dev-resources/puppetlabs/services/"
-                      "jruby/jruby_pool_int_test/"
-                      "logback-test-restart-comes-back.xml")}
-        :jruby-puppet {:max-active-instances 1
-                       :borrow-timeout default-borrow-timeout}}
-       (tk-internal/restart-tk-apps [app])
-       (let [start (System/currentTimeMillis)]
-         (while (and (not= (count @call-seq) 5)
-                     (< (- (System/currentTimeMillis) start) 300000))
-           (Thread/yield)))
-       (let [shutdown-service (tk-app/get-service app :ShutdownService)]
-         (is (nil? (tk-internal/get-shutdown-reason shutdown-service))
-             "shutdown reason was unexpectedly set after restart"))
-       (is (= @call-seq
-              [:init-bonus-service :start-bonus-service :stop-bonus-service :init-bonus-service :start-bonus-service])
-           (str "dumping puppetserver.log\n" (slurp debug-log)))
-       (let [get-results (http-client/get "https://localhost:8140/puppet/v3/environments"
-                                          testutils/catalog-request-options)]
-         (is (= 200 (:status get-results))))))))
-
-(deftest ^:integration test-503-when-app-shuts-down
-  (testing "During a shutdown the agent requests result in a 503 response"
-    (ks-testutils/with-no-jvm-shutdown-hooks
-     (let [services [jruby/jruby-puppet-pooled-service profiler/puppet-profiler-service
-                     handler-service/request-handler-service ps-config/puppet-server-config-service
-                     jetty9/jetty9-service
-                     vcs/versioned-code-service]
-           config (-> (jruby-testutils/jruby-puppet-tk-config
-                       (jruby-testutils/jruby-puppet-config {:max-active-instances 2
-                                                             :borrow-timeout
-                                                             default-borrow-timeout}))
-                      (assoc-in [:webserver :port] 8081))
-           app (tk/boot-services-with-config services config)
-           cert (ssl-utils/pem->cert
-                 (str test-resources-dir "/localhost-cert.pem"))
-           jruby-service (tk-app/get-service app :JRubyPuppetService)
-           jruby-instance (jruby-protocol/borrow-instance jruby-service :i-want-this-instance)
-           handler-service (tk-app/get-service app :RequestHandlerService)
-           request {:uri "/puppet/v3/environments", :params {}, :headers {},
-                    :request-method :GET, :body "", :ssl-client-cert cert, :content-type ""}
-           ping-environment #(->> request (handler-core/wrap-params-for-jruby) (handler/handle-request handler-service))
-           stop-complete? (future (tk-app/stop app))]
-       (let [start (System/currentTimeMillis)]
-         (logging/with-test-logging
-          (while (and
-                  (< (- (System/currentTimeMillis) start) 10000)
-                  (not= 503 (:status (ping-environment))))
-            (Thread/yield))
-          (is (= 503 (:status (ping-environment)))))
-         (jruby-protocol/return-instance jruby-service jruby-instance :i-want-this-instance)
-         (is (not= :timed-out (timed-deref stop-complete?))
-             (str "timed out waiting for the stop to complete, stack:\n"
-                  (get-all-stack-traces-as-str)))
-         (logging/with-test-logging
-          (is (= 503 (:status (ping-environment))))))))))
-
-(deftest ^:integration test-503-when-jruby-is-first-to-shutdown
-  (testing "During a shutdown requests result in 503 http responses"
-    (bootstrap/with-puppetserver-running
-     app
-     {:jruby-puppet {:max-active-instances 2
-                     :borrow-timeout default-borrow-timeout}}
-     (let [jruby-service (tk-app/get-service app :JRubyPuppetService)
-           context (tk-services/service-context jruby-service)
-           jruby-instance (jruby-protocol/borrow-instance jruby-service :i-want-this-instance)
-           stop-complete? (future (tk-services/stop jruby-service context))
-           ping-environment #(testutils/http-get "puppet/v3/environments")]
-       (logging/with-test-logging
-        (let [start (System/currentTimeMillis)]
-          (while (and
-                  (< (- (System/currentTimeMillis) start) 10000)
-                  (not= 503 (:status (ping-environment))))
-            (Thread/yield)))
-        (is (= 503 (:status (ping-environment)))))
-       (jruby-protocol/return-instance jruby-service jruby-instance :i-want-this-instance)
-       (is (not= :timed-out (timed-deref stop-complete?))
-           (str "timed out waiting for the stop to complete, stack:\n"
-                (get-all-stack-traces-as-str)))
-       (let [app-context (tk-app/app-context app)]
-         ;; We have to re-initialize the JRubyPuppetService here because
-         ;; otherwise the tk-app/stop that is included in the
-         ;; with-puppetserver-running macro will fail, as the
-         ;; JRubyPuppetService is already stopped.
-         (swap! app-context assoc-in [:service-contexts :JRubyPuppetService] {})
-         (tk-internal/run-lifecycle-fn! app-context tk-services/init "init" :JRubyPuppetService jruby-service)
-         (tk-internal/run-lifecycle-fn! app-context tk-services/start "start" :JRubyPuppetService jruby-service))))))
