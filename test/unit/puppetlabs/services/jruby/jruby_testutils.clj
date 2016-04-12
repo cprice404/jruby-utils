@@ -1,6 +1,6 @@
 (ns puppetlabs.services.jruby.jruby-testutils
   (:require [puppetlabs.services.jruby.jruby-puppet-core :as jruby-core]
-            [puppetlabs.services.jruby.puppet-environments :as puppet-env]
+   ;[puppetlabs.services.jruby.puppet-environments :as puppet-env]
             [puppetlabs.services.jruby.jruby-puppet-schemas :as jruby-schemas]
             [puppetlabs.services.jruby.jruby-puppet-internal :as jruby-internal]
             [puppetlabs.trapperkeeper.app :as tk-app]

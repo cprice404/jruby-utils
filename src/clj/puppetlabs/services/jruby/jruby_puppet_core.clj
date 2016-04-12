@@ -5,7 +5,7 @@
             [puppetlabs.kitchensink.classpath :as ks-classpath]
             [puppetlabs.kitchensink.core :as ks]
             [puppetlabs.services.jruby.jruby-puppet-schemas :as jruby-schemas]
-            [puppetlabs.services.jruby.puppet-environments :as puppet-env]
+   ;[puppetlabs.services.jruby.puppet-environments :as puppet-env]
             [puppetlabs.services.jruby.jruby-puppet-internal :as jruby-internal]
             [puppetlabs.services.jruby.jruby-puppet-agents :as jruby-agents]
             [clojure.java.io :as io]

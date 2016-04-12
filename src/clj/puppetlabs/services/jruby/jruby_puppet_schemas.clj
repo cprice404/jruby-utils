@@ -1,6 +1,7 @@
 (ns puppetlabs.services.jruby.jruby-puppet-schemas
   (:require [schema.core :as schema]
-            [puppetlabs.services.jruby.puppet-environments :as puppet-env])
+   ;[puppetlabs.services.jruby.puppet-environments :as puppet-env]
+            )
   (:import (clojure.lang Atom Agent IFn PersistentArrayMap PersistentHashMap)
            (com.puppetlabs.puppetserver PuppetProfiler JRubyPuppet EnvironmentRegistry)
            (com.puppetlabs.puppetserver.pool LockablePool)

@@ -1,7 +1,7 @@
 (ns puppetlabs.services.jruby.jruby-puppet-internal
   (:require [schema.core :as schema]
             [puppetlabs.services.jruby.jruby-puppet-schemas :as jruby-schemas]
-            [puppetlabs.services.jruby.puppet-environments :as puppet-env]
+   ;[puppetlabs.services.jruby.puppet-environments :as puppet-env]
             [clojure.tools.logging :as log]
             [puppetlabs.kitchensink.core :as ks])
   (:import (com.puppetlabs.puppetserver PuppetProfiler JRubyPuppet)
