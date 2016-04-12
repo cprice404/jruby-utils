@@ -11,17 +11,17 @@
             [puppetlabs.services.puppet-profiler.puppet-profiler-service :as profiler]
             [puppetlabs.trapperkeeper.services.webserver.jetty9-service :as jetty9]
             [puppetlabs.trapperkeeper.services.webrouting.webrouting-service :as webrouting]
-            [puppetlabs.services.puppet-admin.puppet-admin-service :as puppet-admin]
+            ;[puppetlabs.services.puppet-admin.puppet-admin-service :as puppet-admin]
             [puppetlabs.trapperkeeper.services.authorization.authorization-service :as authorization]
             [puppetlabs.http.client.sync :as http-client]
             [me.raynes.fs :as fs]
             [puppetlabs.trapperkeeper.internal :as tk-internal]
             [puppetlabs.trapperkeeper.core :as tk]
-            [puppetlabs.services.request-handler.request-handler-service :as handler-service]
-            [puppetlabs.services.versioned-code-service.versioned-code-service :as vcs]
-            [puppetlabs.services.config.puppet-server-config-service :as ps-config]
-            [puppetlabs.services.protocols.request-handler :as handler]
-            [puppetlabs.services.request-handler.request-handler-core :as handler-core]
+            ;[puppetlabs.services.request-handler.request-handler-service :as handler-service]
+            ;[puppetlabs.services.versioned-code-service.versioned-code-service :as vcs]
+            ;[puppetlabs.services.config.puppet-server-config-service :as ps-config]
+            ;[puppetlabs.services.protocols.request-handler :as handler]
+            ;[puppetlabs.services.request-handler.request-handler-core :as handler-core]
             [puppetlabs.ssl-utils.core :as ssl-utils]
             [puppetlabs.kitchensink.testutils :as ks-testutils]
             [puppetlabs.puppetserver.testutils :as testutils :refer
@@ -178,7 +178,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Tests
 
-(deftest ^:integration admin-api-flush-jruby-pool-test
+#_(deftest ^:integration admin-api-flush-jruby-pool-test
   (testing "Flushing the pool results in all new JRuby instances"
     (bootstrap/with-puppetserver-running
       app
@@ -197,7 +197,7 @@
         ;; now the pool is flushed, so the constants should be cleared
         (is (true? (verify-no-constants pool-context 4)))))))
 
-(deftest ^:integration hold-instance-while-pool-flush-in-progress-test
+#_(deftest ^:integration hold-instance-while-pool-flush-in-progress-test
   (testing "instance borrowed from old pool before pool flush begins and returned *after* new pool is available"
     (bootstrap/with-puppetserver-running
       app
@@ -225,7 +225,7 @@
         ;; now the pool is flushed, and the constants should be cleared
         (is (true? (verify-no-constants pool-context 4)))))))
 
-(deftest ^:integration hold-file-handle-on-instance-while-pool-flush-in-progress-test
+#_(deftest ^:integration hold-file-handle-on-instance-while-pool-flush-in-progress-test
   (testing "file handle opened from old pool instance is held open across pool flush"
     (bootstrap/with-puppetserver-running
       app
@@ -264,7 +264,7 @@
         ;; now the pool is flushed, and the constants should be cleared
         (is (true? (verify-no-constants pool-context 2)))))))
 
-(deftest ^:integration max-requests-flush-while-pool-flush-in-progress-test
+#_(deftest ^:integration max-requests-flush-while-pool-flush-in-progress-test
   (testing "instance from new pool hits max-requests while flush in progress"
     (let [test-pem #(str "./dev-resources/puppetlabs/services/jruby/jruby_pool_int_test/" %)
           ssl-options {:ssl-ca-cert (test-pem "ca-cert.pem")
@@ -357,7 +357,7 @@
 (defprotocol BonusService
   (bonus-service-fn [this]))
 
-(deftest ^:integration test-restart-comes-back
+#_(deftest ^:integration test-restart-comes-back
   (testing "After a TK restart puppetserver can still handle requests"
     (let [call-seq (atom [])
           debug-log "./target/test-restart-comes-back.log"
@@ -393,7 +393,7 @@
                                           testutils/catalog-request-options)]
          (is (= 200 (:status get-results))))))))
 
-(deftest ^:integration test-503-when-app-shuts-down
+#_(deftest ^:integration test-503-when-app-shuts-down
   (testing "During a shutdown the agent requests result in a 503 response"
     (ks-testutils/with-no-jvm-shutdown-hooks
      (let [services [jruby/jruby-puppet-pooled-service profiler/puppet-profiler-service
@@ -429,7 +429,7 @@
          (logging/with-test-logging
           (is (= 503 (:status (ping-environment))))))))))
 
-(deftest ^:integration test-503-when-jruby-is-first-to-shutdown
+#_(deftest ^:integration test-503-when-jruby-is-first-to-shutdown
   (testing "During a shutdown requests result in 503 http responses"
     (bootstrap/with-puppetserver-running
      app
