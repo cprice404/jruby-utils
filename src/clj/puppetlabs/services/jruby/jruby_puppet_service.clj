@@ -69,48 +69,48 @@
           pool         (core/get-pool pool-context)]
       (core/free-instance-count pool)))
 
-  (mark-environment-expired!
-    [this env-name]
-    (let [{:keys [environment-class-info-tags pool-context]}
-          (tk-services/service-context this)]
-      (core/mark-environment-expired! pool-context
-                                      env-name
-                                      environment-class-info-tags)))
-
-  (mark-all-environments-expired!
-    [this]
-    (let [{:keys [environment-class-info-tags pool-context]}
-          (tk-services/service-context this)]
-      (core/mark-all-environments-expired! pool-context
-                                           environment-class-info-tags)))
-
-  (get-environment-class-info
-    [this jruby-instance env-name]
-    (.getClassInfoForEnvironment jruby-instance env-name))
-
-  (get-environment-class-info-tag
-   [this env-name]
-   (let [environment-class-info (:environment-class-info-tags
-                                 (tk-services/service-context this))]
-     (get-in @environment-class-info [env-name :tag])))
-
-  (get-environment-class-info-cache-generation-id!
-   [this env-name]
-   (let [environment-class-info (:environment-class-info-tags
-                                 (tk-services/service-context this))]
-     (core/get-environment-class-info-cache-generation-id!
-      environment-class-info
-      env-name)))
-
-  (set-environment-class-info-tag!
-   [this env-name tag cache-generation-id-before-tag-computed]
-   (let [environment-class-info (:environment-class-info-tags
-                                 (tk-services/service-context this))]
-     (swap! environment-class-info
-            core/environment-class-info-cache-updated-with-tag
-            env-name
-            tag
-            cache-generation-id-before-tag-computed)))
+  ;(mark-environment-expired!
+  ;  [this env-name]
+  ;  (let [{:keys [environment-class-info-tags pool-context]}
+  ;        (tk-services/service-context this)]
+  ;    (core/mark-environment-expired! pool-context
+  ;                                    env-name
+  ;                                    environment-class-info-tags)))
+  ;
+  ;(mark-all-environments-expired!
+  ;  [this]
+  ;  (let [{:keys [environment-class-info-tags pool-context]}
+  ;        (tk-services/service-context this)]
+  ;    (core/mark-all-environments-expired! pool-context
+  ;                                         environment-class-info-tags)))
+  ;
+  ;(get-environment-class-info
+  ;  [this jruby-instance env-name]
+  ;  (.getClassInfoForEnvironment jruby-instance env-name))
+  ;
+  ;(get-environment-class-info-tag
+  ; [this env-name]
+  ; (let [environment-class-info (:environment-class-info-tags
+  ;                               (tk-services/service-context this))]
+  ;   (get-in @environment-class-info [env-name :tag])))
+  ;
+  ;(get-environment-class-info-cache-generation-id!
+  ; [this env-name]
+  ; (let [environment-class-info (:environment-class-info-tags
+  ;                               (tk-services/service-context this))]
+  ;   (core/get-environment-class-info-cache-generation-id!
+  ;    environment-class-info
+  ;    env-name)))
+  ;
+  ;(set-environment-class-info-tag!
+  ; [this env-name tag cache-generation-id-before-tag-computed]
+  ; (let [environment-class-info (:environment-class-info-tags
+  ;                               (tk-services/service-context this))]
+  ;   (swap! environment-class-info
+  ;          core/environment-class-info-cache-updated-with-tag
+  ;          env-name
+  ;          tag
+  ;          cache-generation-id-before-tag-computed)))
 
   (flush-jruby-pool!
     [this]
@@ -196,7 +196,8 @@
        (do
          (jruby/return-instance ~jruby-service pool-instance# ~reason)
          (recur (jruby/borrow-instance ~jruby-service ~reason)))
-       (let [~jruby-puppet (:jruby-puppet pool-instance#)]
+       ;; TODO rename stuff
+       (let [~jruby-puppet pool-instance#]
          (try
            ~@body
            (finally
